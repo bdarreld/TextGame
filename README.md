@@ -1,7 +1,6 @@
-## Description
-
-Welcome to Slitheria! <br/>
-About: This is a side-scrolling text-based rogue-like game. It features slithering your way through the tight abyss of Slitheria, where you must utilize your surroundings to get to the goal.
+## About
+TextGame is an experimental project built and developed to hone my skills in game development, including dynamic and exciting game mechanics, program packaging, and more. <br/>
+TextGame is a 2D top-down game which uses any system's built-in terminal to play. The player is placed on a grid-like map with obstacles, including walls and enemies. The objective of the game is to get to the goal and win.
 
 ## Game controls
   W - Move up <br/>
