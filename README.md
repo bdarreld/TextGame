@@ -23,4 +23,5 @@ TextGame is a 2D top-down game which uses any system's built-in terminal to play
      ```
      java -jar TextGame.jar
      ```
-4. Once you enter the program, if you initiate the **play** command, then click on the focus window to start playing.
+4. Once you enter the program, once you enter **play**, you will be automatically locked onto the focus window.<br/>
+    To dispose of the focus window, you must end the game by: dying, winning, or terminate the game with CTRL + Q.
