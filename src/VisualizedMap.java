@@ -53,8 +53,8 @@ public class VisualizedMap {
         147,  // Medium Purple
     };
     
-    // Constructor initializing a map by reading from a file
-    public VisualizedMap(String path, int vWidth, int vHeight){
+    // Constructor initializing a map by reading from a string
+    public VisualizedMap(String mapContent, int vWidth, int vHeight){
         this.VIEWPORT_WIDTH = vWidth;
         this.VIEWPORT_HEIGHT = vHeight;
 
@@ -62,11 +62,66 @@ public class VisualizedMap {
         pairedPortals = new HashMap<>();
         HashMap<Character, Portal> pendingPortals = new HashMap<>();
 
-        try(Scanner scanIn = new Scanner(new File(path))){
+        String[] lines = mapContent.split("\n");
+
+        int width = Integer.parseInt(lines[1]);
+        int height = Integer.parseInt(lines[2]);
+
+        // Initialize map, it will be rectangular
+        map = new char[height][width];
+
+        // Iterate through each row
+        for(int currRow = 0; currRow < height; currRow++){
+            // Iterate through each column of a row
+            char[] row = lines[currRow + 3].toCharArray();
+            
+            // Identify the x and y coordinates of the icon
+            for(int currCol = 0; currCol < row.length; currCol++){
+                char c = row[currCol];
+                if(c == 'x'){
+                    icon_x = currCol;
+                    icon_y = currRow;
+                }
+
+                // Load portal pairs
+                if(Character.isDigit(c)){
+                    Portal currentPortal = new Portal(currCol, currRow, c);
+
+                    if(!pendingPortals.containsKey(c)){
+                        // If there are no established portal of that ID
+                        pendingPortals.put(c, currentPortal);
+                    }else{
+                        // Map portals with the same id
+                        Portal oldPortal = pendingPortals.get(c);
+
+                        // Ensure bidirectionality
+                        pairedPortals.put(oldPortal, currentPortal);
+                        pairedPortals.put(currentPortal, oldPortal);
+                        
+                        // Remove from pendingPortals HashMap
+                        pendingPortals.remove(c);
+                    }
+                }
+            }
+            // Initialize each row
+            map[currRow] = row;
+        }
+    }
+
+    // Constructor initializing a map by reading from a file
+    public VisualizedMap(File mapContent, int vWidth, int vHeight){
+        this.VIEWPORT_WIDTH = vWidth;
+        this.VIEWPORT_HEIGHT = vHeight;
+
+        player = new Player();
+        pairedPortals = new HashMap<>();
+        HashMap<Character, Portal> pendingPortals = new HashMap<>();
+
+        try(Scanner scanIn = new Scanner(mapContent)){
 
             scanIn.nextLine(); // skip descriptor
-            int numRow = scanIn.nextInt(); scanIn.nextLine();
             int numCol = scanIn.nextInt(); scanIn.nextLine();
+            int numRow = scanIn.nextInt(); scanIn.nextLine();
 
             // Initialize map and dirty, it will be rectangular
             map = new char[numRow][numCol];
@@ -120,92 +175,61 @@ public class VisualizedMap {
     public int getHeight(){
         return map.length;
     }
-    
-    public void right(){
-        synchronized(mapLock){
-            if(validToMove(icon_x + 1, icon_y)){
-                char nextTile = map[icon_y][icon_x + 1]; // save the tile we're about to move onto
 
-                // Teleport if and only if ctrl is pressed and nextTile is a digit
-                if(ctrlPressed && Character.isDigit(nextTile)){
-                    handlePortal(icon_x + 1, icon_y);
-                    return;
-                }
-                
-                // Restore tile we were standing on
-                map[icon_y][icon_x] = prev;
-                // Move icon and save new tile
-                map[icon_y][++icon_x] = 'x';
-                prev = nextTile;
-                handleSpecialTile(prev);
+    public boolean movePlayer(Player.Direction direction){
+        int newX = icon_x;
+        int newY = icon_y;
 
-            }
+        switch(direction){
+            case LEFT:
+                newX--;
+                break;
+            case RIGHT:
+                newX++;
+                break;
+            case UP:
+                newY--;
+                break;
+            case DOWN:
+                newY++;
+                break;
+            case UP_LEFT:
+                newX--;
+                newY--;
+                break;
+            case UP_RIGHT:
+                newX++;
+                newY--;
+                break;
+            case DOWN_LEFT:
+                newX--;
+                newY++;
+                break;
+            case DOWN_RIGHT:
+                newX++;
+                newY++;
+                break;
         }
-    }
 
-    public void left(){
-        synchronized(mapLock){
-            if(validToMove(icon_x - 1, icon_y)){
-                char nextTile = map[icon_y][icon_x - 1]; // save the tile we're about to move onto
+        if(validToMove(newX, newY)){
+            char nextTile = map[newY][newX];
 
-                // Teleport if and only if ctrl is pressed and nextTile is a digit
-                if(ctrlPressed && Character.isDigit(nextTile)){
-                    handlePortal(icon_x - 1, icon_y);
-                    return;
-                }
-
-                // Restore tile we were standing on
-                map[icon_y][icon_x] = prev;
-                // Move icon and save new tile
-                map[icon_y][--icon_x] = 'x';
-                prev = nextTile;
-                handleSpecialTile(prev);
+            if(ctrlPressed && Character.isDigit(nextTile)){
+                return handlePortal(newX, newY);
             }
+
+            // Normal movement
+            map[icon_y][icon_x] = prev;
+            icon_x = newX;
+            icon_y = newY;
+            map[icon_y][icon_x] = 'x';
+            prev = nextTile;
+            handleSpecialTile(prev);
+            return true;
         }
+        return false;
+
     }
-
-    public void up(){
-        synchronized(mapLock){
-            if(validToMove(icon_x, icon_y - 1)){
-                char nextTile = map[icon_y - 1][icon_x]; // save the tile we're about to move onto
-
-                // Teleport if and only if ctrl is pressed and nextTile is a digit
-                if(ctrlPressed && Character.isDigit(nextTile)){
-                    handlePortal(icon_x, icon_y - 1);
-                    return;
-                }
-                
-                // Restore tile we were standing on
-                map[icon_y][icon_x] = prev;
-                // Move icon and save new tile
-                map[--icon_y][icon_x] = 'x';
-                prev = nextTile;
-                handleSpecialTile(prev);
-            }
-        }
-    }
-
-    public void down(){
-        synchronized(mapLock){
-            if(validToMove(icon_x, icon_y + 1)){
-                char nextTile = map[icon_y + 1][icon_x]; // save the tile we're about to move onto
-
-                // Teleport if and only if ctrl is pressed and nextTile is a digit
-                if(ctrlPressed && Character.isDigit(nextTile)){
-                    handlePortal(icon_x, icon_y + 1);
-                    return;
-                }
-
-                // Restore tile we were standing on
-                map[icon_y][icon_x] = prev;
-                // Move icon and save new tile
-                map[++icon_y][icon_x] = 'x';
-                prev = nextTile;
-                handleSpecialTile(prev);
-            }
-        }
-    }
-
     public boolean validToMove(int newX, int newY){
         return newX >= 1 && newX < map[0].length - 1 &&
                newY >= 1 && newY < map.length - 1 &&
@@ -226,7 +250,7 @@ public class VisualizedMap {
         }
     }
 
-    private void handlePortal(int x, int y){
+    private boolean handlePortal(int x, int y){
         Portal inPortal = new Portal(x, y, map[y][x]);
         Portal outPortal = pairedPortals.get(inPortal);
     
@@ -243,7 +267,9 @@ public class VisualizedMap {
             // Move icon to outPortal graphically
             prev = map[outPortal.getY()][outPortal.getX()]; // save value of previous tile
             map[outPortal.getY()][outPortal.getX()] = 'x';
+            return true;
         }
+        return false;
     }
 
     // --------- Rendering Methods ---------

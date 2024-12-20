@@ -1,2 +1,2 @@
 #!/bin/bash
-java -jar Slitheria.jar
+java -jar TextGame.jar

@@ -2,14 +2,38 @@ import java.io.FileWriter;
 import java.io.IOException;
 import java.util.*;
 import java.io.File;
+import java.util.concurrent.atomic.AtomicInteger;
 
-public class MapGenerator {
+public class MG {
     private static final char WALL = '#';
     private static final char EMPTY = '+';
     private static final char SPIKE = '*';
     private static final char GOAL = ':';
     private static final char PLAYER = 'x';
-    
+    public String mapString = "";
+    private static AtomicInteger progress;
+
+    public MG(AtomicInteger progress) {
+        MG.progress = progress;
+        Random rand = new Random();
+        
+        // Define dimension bounds
+        final int MIN_WIDTH = 20;
+        final int MAX_WIDTH = 20;
+        final int MIN_HEIGHT = 20;
+        final int MAX_HEIGHT = 20;
+        
+        // Generate uniform dimensions
+        int width = MIN_WIDTH + (int)(rand.nextDouble() * (MAX_WIDTH - MIN_WIDTH));
+        int height = MIN_HEIGHT + (int)(rand.nextDouble() * (MAX_HEIGHT - MIN_HEIGHT));
+        
+        // Ensure dimensions are even for better symmetry
+        width = width - (width % 2);
+        height = height - (height % 2);
+        
+        mapString = generateMap(width, height);
+    }
+
     static class Cell {
         Set<Character> possibilities;
         char value;
@@ -411,18 +435,28 @@ public class MapGenerator {
     }
 
     public static String generateMap(int width, int height) {
+        progress.set(0);
+
         StringBuilder mapContent = new StringBuilder();
-        mapContent.append("Standard " + height + "x" + width + " map with obstacles.\n");
-        mapContent.append(height + "\n");
+        mapContent.append("Standard " + width + "x" + height + " map with obstacles.\n");
         mapContent.append(width + "\n");
+        mapContent.append(height + "\n");
 
         Cell[][] grid = new Cell[height][width];
         Random rand = new Random();
         
+        progress.set(10);   // After initialization
+
         // Initialize grid
         for (int y = 0; y < height; y++) {
             for (int x = 0; x < width; x++) {
                 grid[y][x] = new Cell();
+                
+                progress.set(10 + (y * 20 / height));
+                // Bias towards empty spaces
+                if (rand.nextDouble() < 0.4){
+                    grid[y][x].possibilities.remove(WALL);
+                }
             }
         }
 
@@ -435,8 +469,10 @@ public class MapGenerator {
             collapse(grid, 0, y, WALL);
             collapse(grid, width-1, y, WALL);
         }
-
+        
         // Run wave function collapse
+        int totalCells = width * height;
+        int collapsedCells = 0;
         while (!isFullyCollapsed(grid)) {
             Position minEntropyPos = findMinEntropyPosition(grid, rand);
             if (minEntropyPos == null) break;
@@ -451,6 +487,14 @@ public class MapGenerator {
             // Randomly choose from possible values
             List<Character> possible = new ArrayList<>(cell.possibilities);
             char chosenValue = possible.get(rand.nextInt(possible.size()));
+
+            // Reduce spike probability
+            if(chosenValue == SPIKE && rand.nextDouble() < 0.7){
+                chosenValue = EMPTY; // Convert some spikes to empty spaces
+            }
+
+            progress.set(30 + (collapsedCells * 40 / totalCells));
+            collapsedCells++;
             collapse(grid, minEntropyPos.x, minEntropyPos.y, chosenValue);
             
             // Propagate constraints
@@ -465,11 +509,15 @@ public class MapGenerator {
             }
         }
 
+        progress.set(80);
+
         // Place player and goal
         placePlayerAndGoal(map);
-        
+        progress.set(90);
+
         // Add portals
         addPortals(map);
+        progress.set(95);
 
         // Convert to string
         for (char[] row : map) {
@@ -478,6 +526,8 @@ public class MapGenerator {
         
         // Clear spike groups
         clearSpikes(mapContent);
+        progress.set(100);
+
         return mapContent.toString();
     }
 
@@ -487,8 +537,8 @@ public class MapGenerator {
         
         // First line is description, next two lines are height and width
         String description = lines[0];
-        int height = Integer.parseInt(lines[1]);
-        int width = Integer.parseInt(lines[2]);
+        int width = Integer.parseInt(lines[1]);
+        int height = Integer.parseInt(lines[2]);
         
         // Create map from subsequent lines
         char[][] map = new char[height][width];
@@ -497,8 +547,8 @@ public class MapGenerator {
         }
         
         // Spike reduction parameters
-        int MAX_CLUSTER_SIZE = 0;  // Maximum allowed spikes in a cluster
-        double SPIKE_REDUCTION_PROBABILITY = 1.0; // Probability of removing excess spikes
+        int MAX_CLUSTER_SIZE = 1;  // Maximum allowed spikes in a cluster
+        double SPIKE_REDUCTION_PROBABILITY = 2.0; // Probability of removing excess spikes
         
         // Identify and process spike clusters
         for (int y = 1; y < height - 1; y++) {
@@ -538,8 +588,8 @@ public class MapGenerator {
         // Rebuild mapContent with modified map
         mapContent.setLength(0);  // Clear existing content
         mapContent.append(description).append("\n");
-        mapContent.append(height).append("\n");
         mapContent.append(width).append("\n");
+        mapContent.append(height).append("\n");
         
         for (char[] row : map) {
             mapContent.append(row).append('\n');
@@ -595,27 +645,26 @@ public class MapGenerator {
         Random rand = new Random();
         
         // Define dimension bounds
-        final int MIN_WIDTH = 75;
-        final int MAX_WIDTH = 100;
-        final int MIN_HEIGHT = 75;
-        final int MAX_HEIGHT = 100;
+        final int MIN_WIDTH = 100;
+        final int MAX_WIDTH = 200;
+        final int MIN_HEIGHT = 100;
+        final int MAX_HEIGHT = 200;
         
-        // Generate multiple maps
-        for (int i = 0; i < 2; i++) {
-            // Generate uniform dimensions
-            int width = MIN_WIDTH + (int)(rand.nextDouble() * (MAX_WIDTH - MIN_WIDTH));
-            int height = MIN_HEIGHT + (int)(rand.nextDouble() * (MAX_HEIGHT - MIN_HEIGHT));
-            
-            // Ensure dimensions are even for better symmetry (optional)
-            width = width - (width % 2);
-            height = height - (height % 2);
-            
-            String mapContent = generateMap(width, height);
-            if (mapContent != null) {
-                saveNewMap(mapContent);  // Call static method directly
-            }
-            
-            System.out.println("Generated map with dimensions: " + width + "x" + height);
+        // Generate uniform dimensions
+        int width = MIN_WIDTH + (int)(rand.nextDouble() * (MAX_WIDTH - MIN_WIDTH));
+        int height = MIN_HEIGHT + (int)(rand.nextDouble() * (MAX_HEIGHT - MIN_HEIGHT));
+        
+        // Ensure dimensions are even for better symmetry (optional)
+        width = width - (width % 2);
+        height = height - (height % 2);
+        
+        // Use only to statically generate maps
+        double startTime = System.currentTimeMillis();
+        String mapString = generateMap(150, 150);
+        double endTime = System.currentTimeMillis();
+        System.out.println("Time taken: " + (endTime - startTime)/1000 + "seconds");
+        if (mapString != null) {
+            saveNewMap(mapString);  // Call static method directly
         }
     }
 }

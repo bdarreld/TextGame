@@ -1,5 +1,5 @@
 @echo off
-echo === Building Slitheria ===
+echo === Building TextGame ===
 
 :: Clean and create directories
 echo Cleaning previous build...
@@ -25,7 +25,7 @@ if exist maps\*.txt (
 
 :: Create JAR
 echo Creating JAR file...
-jar cfm Slitheria.jar META-INF\MANIFEST.MF -C bin .
+jar cfm TextGame.jar META-INF\MANIFEST.MF -C bin .
 if errorlevel 1 (
     echo Error creating JAR!
     pause
@@ -40,5 +40,5 @@ if not exist maps\map1.txt (
 )
 
 echo === Build Successful! ===
-echo You can run the game with: java -jar Slitheria.jar
+echo You can run the game with: java -jar TextGame.jar
 pause

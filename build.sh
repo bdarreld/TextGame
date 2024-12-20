@@ -24,7 +24,7 @@ fi
 
 # Create JAR
 echo "Creating JAR file..."
-jar cfm Slitheria.jar META-INF/MANIFEST.MF -C bin .
+jar cfm TextGame.jar META-INF/MANIFEST.MF -C bin .
 if [ $? -ne 0 ]; then
     echo "Error creating JAR!"
     exit 1
@@ -38,4 +38,4 @@ if [ ! -f maps/map1.txt ]; then
 fi
 
 echo "=== Build Successful! ==="
-echo "You can run the game with: java -jar Slitheria.jar"
+echo "You can run the game with: java -jar TextGame.jar"

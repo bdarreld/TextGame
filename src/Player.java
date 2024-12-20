@@ -4,10 +4,16 @@
  * - Hitpoints
  */
 public class Player {
-    private int hp = 3; // 3 by default
+    private int hp = 5; // 5 by default
+
+    // Invincibility properties
     private boolean isInvincible = false;
     private long invincibilityStartTime = 0;
     private static final long INVINICIBILITY_DURATION = 1500; // 1500 ms --> 1.5 seconds
+
+    public enum Direction {
+        UP, DOWN, LEFT, RIGHT
+    }
 
     public int getHP(){
         return hp;
