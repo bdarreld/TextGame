@@ -15,12 +15,12 @@ TextGame is a 2D top-down game which uses any system's built-in terminal to play
 - Java 11 or higher
 
 ## Quick Start (For Players)
-1. Download `Slitheria.jar` from the [Releases](../../releases) page
+1. Download `TextGame.jar` from the [Releases](../../releases) page
 2. Make sure you have Java installed
 3. Run the game using one of these methods:
    - Double-click the JAR file
    - Or open terminal/command prompt and run:
      ```
-     java -jar Slitheria.jar
+     java -jar TextGame.jar
      ```
 4. Once you enter the program, if you initiate the **play** command, then click on the focus window to start playing.
