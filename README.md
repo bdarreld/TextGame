@@ -1,6 +1,5 @@
 ## About
 TextGame is an experimental project aimed at refining my game development skills, with a focus on crafting engaging game mechanics, efficient program packaging, and other key aspects of game design.
-<br>
 The game features a 2D top-down view and is playable directly from any system’s built-in terminal. Players navigate a grid-based map, encountering various obstacles like walls and enemies. The objective is simple: reach the goal and win.
 
 ## Game controls
