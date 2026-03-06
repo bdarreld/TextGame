@@ -309,7 +309,7 @@ public class VisualizedMap {
                 else mapBuffer.append("\033[1;36m" + c + "\033[0m ");
                 break;
             case '#':
-                mapBuffer.append("\033[38;5;255m" + c + "\033[0m ");
+                mapBuffer.append("\033[1;32m" + c + "\033[0m ");
                 break;
             case ':':
                 mapBuffer.append("\033[38;5;226m" + c + "\033[0m ");
